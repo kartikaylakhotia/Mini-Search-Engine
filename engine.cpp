@@ -18,16 +18,6 @@ const int MAX_N = 2e6 + 5;
     Implementations are simple.
 */
 
-//Some Observations & Problem Statement
-/*
- 
-*/
-
-//Claims on Algorithm
-/*
-   
-*/
-
 struct DocInfo {
     int id;
     string path;
