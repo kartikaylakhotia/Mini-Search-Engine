@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <sys/resource.h>
 using namespace std;
 namespace fs = std::filesystem;
 #include <ext/pb_ds/assoc_container.hpp>
@@ -36,7 +37,8 @@ unordered_set<string> stop_words = {
     "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", 
     "under", "until", "up", "very", 
     "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", 
-    "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"
+    "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves",
+    "subject", "from", "date", "lines", "organization", "message-id", "references", "newsgroups", "path", "sender", "distribution"
 };
 
 string clean_token(string &token) {
@@ -66,6 +68,18 @@ unordered_map<string, vector<pair<int, int>>> inverted_index;
 unordered_map<int, DocInfo> documents;
 vector<string> vocabulary; 
 int doc_counter = 0;
+
+void print_memory_usage() {
+    struct rusage r_usage;
+    getrusage(RUSAGE_SELF, &r_usage);
+    double memory_mb = 0;
+    #ifdef __APPLE__
+        memory_mb = r_usage.ru_maxrss / 1024.0 / 1024.0;
+    #else
+        memory_mb = r_usage.ru_maxrss / 1024.0;
+    #endif
+    cout << "Memory usage: " << memory_mb << " MB" << endl;
+}
 
 void add_document(const fs::path &filepath) {
     ifstream file(filepath);
@@ -118,7 +132,8 @@ void build_index(const string &directory_path) {
     cout << "Indexing Complete." << endl;
     cout << "Total Documents: " << doc_counter << endl;
     cout << "Total Unique Terms: " << inverted_index.size() << endl;
-    cout << "Time taken to index: " << elapsed.count() << " seconds" << endl;
+    cout << "Index Build Time: " << elapsed.count() << " seconds" << endl;
+    print_memory_usage();
     cout << "------------------------------------------------" << endl;
 }
 
@@ -206,7 +221,6 @@ string get_suggestion(string word) {
     int min_dist = 3; 
 
     for (const string &term : vocabulary) {
-        
         if (abs((int)term.length() - (int)word.length()) > 2) continue;
         if (term[0] != word[0]) continue; 
 
@@ -219,7 +233,38 @@ string get_suggestion(string word) {
     return best_match;
 }
 
-signed main() {
+void get_recommendations(int doc_id, const string& original_query) {
+    ifstream file(documents[doc_id].path);
+    if (!file.is_open()) return;
+
+    stringstream buffer;
+    buffer << file.rdbuf();
+    string content = buffer.str();
+    vector<string> tokens = preprocess(content);
+    unordered_map<string, int> freqs;
+    vector<string> query_tokens = preprocess(original_query);
+    unordered_set<string> q_set(query_tokens.begin(), query_tokens.end());
+
+    for(const string& t : tokens) {
+        if(q_set.find(t) == q_set.end()) freqs[t]++;
+    }
+
+    vector<pair<int, string>> sorted_words;
+    for(auto const& [word, count] : freqs) {
+        sorted_words.push_back({count, word});
+    }
+    sort(sorted_words.rbegin(), sorted_words.rend());
+
+    cout << "Related Keywords: ";
+    int count = 0;
+    for(const auto& p : sorted_words) {
+        cout << p.second << " ";
+        if(++count >= 3) break;
+    }
+    cout << endl;
+}
+
+int main() {
     string dataset_path = "20_newsgroups"; 
     
     build_index(dataset_path);
@@ -231,10 +276,10 @@ signed main() {
 
         if (input == "exit") break;
 
-        
         stringstream ss(input);
         string last_word;
         while(ss >> last_word) {}
+        
         vector<string> auto_sug = autocomplete(last_word);
         if (!auto_sug.empty()) {
             cout << "Autocomplete: ";
@@ -242,20 +287,15 @@ signed main() {
             cout << endl;
         }
 
-        
         stringstream ss2(input);
         string temp_word;
-        string corrected_query = "";
         bool typo_found = false;
         
         while(ss2 >> temp_word) {
             string suggestion = get_suggestion(temp_word);
             if (!suggestion.empty()) {
                 cout << "Did you mean '" << suggestion << "' instead of '" << temp_word << "'?" << endl;
-                corrected_query += suggestion + " ";
                 typo_found = true;
-            } else {
-                corrected_query += temp_word + " ";
             }
         }
 
@@ -267,7 +307,8 @@ signed main() {
         chrono::duration<double> search_time = end_search - start_search;
 
         cout << "\nResults found: " << results.size() << endl;
-        cout << "Search time: " << search_time.count() << " seconds" << endl;
+        cout << "Search time: " << fixed << setprecision(6) << search_time.count() << " seconds" << endl;
+        print_memory_usage();
         
         int limit = std::min<int>(results.size(), 5);
         if (limit > 0) {
@@ -277,6 +318,8 @@ signed main() {
                 double score = results[i].first;
                 cout << "[" << i + 1 << "] Score: " << score << " | File: " << documents[doc_id].path << endl;
             }
+            cout << endl;
+            get_recommendations(results[0].second, input);
         } else {
             cout << "No matching documents found." << endl;
         }
