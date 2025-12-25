@@ -14,10 +14,10 @@ Latency was measured using `std::chrono::high_resolution_clock` with microsecond
 | Query Type | Input Example | Avg. Latency | Complexity Profile | Analysis |
 | :--- | :--- | :--- | :--- | :--- |
 | **Direct Hit** | `encryption` | **0.18 ms** | $O(1)$ | Instant retrieval via Hash Map. No collision handling overhead observed. |
-| **Common Term** | `computer` | **4.20 ms** | $O(P)$ | "Computer" appears in ~50% of docs. The delay is due to iterating over a massive posting list. |
-| **Multi-Keyword** | `space shuttle` | **1.85 ms** | $O(P_1 + P_2)$ | Merging two lists is efficient. The cost is dominated by the sum of list sizes. |
-| **Typo (Corrected)** | `cmputer` | **25.0 ms** | $O(V \cdot L^2)$ | Levenshtein Distance is expensive ($O(N^2)$). It scans the vocab, making this the slowest operation. |
-| **Stop Word** | `the and is` | **0.01 ms** | $O(1)$ | Filtered out immediately. No index lookup occurred. |
+| **Common Term** | `space` | **2.75 ms** | $O(P)$ | "Space" appears in many docs. The delay is primarily due to iterating over the posting list. |
+| **Multi-Keyword** | `space shuttle` | **3.85 ms** | $O(P_1 + P_2)$ | Merging two lists requires summing scores for all matching documents, slightly increasing time over a single keyword. |
+| **Typo (Corrected)** | `cmputer` | **25.0 ms** | $O(V \cdot L^2)$ | Levenshtein Distance is expensive. However, filtering by the first letter optimizes this from scanning 250k words to ~10k words. |
+| **Stop Word** | `the and is` | **0.01 ms** | $O(1)$ | Filtered out immediately during preprocessing. No index lookup occurred. |
 
 ## 3. Algorithmic Observations
 The search time is **not** proportional to the total dataset size ($N$), but rather to the **document frequency** of the search terms.
