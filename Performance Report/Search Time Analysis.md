@@ -9,7 +9,7 @@ Latency was measured using `std::chrono::high_resolution_clock` with microsecond
 
 ## 2. Quantitative Benchmarks
 *Test Environment: Apple Silicon M1 / 8GB RAM*
-*Dataset: 20 Newsgroups (18,828 documents)*
+*Dataset: 20 Newsgroups (19,998 documents)*
 
 | Query Type | Input Example | Avg. Latency | Complexity Profile | Analysis |
 | :--- | :--- | :--- | :--- | :--- |
