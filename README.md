@@ -73,3 +73,51 @@ Let:
 * The Inverted Index is the primary consumer of RAM. By using 32-bit integers for IDs and frequencies, we minimize the memory footprint compared to storing raw strings.
 
 ---
+
+## Build & Execution Instructions
+
+### Prerequisites
+* C++ Compiler (GCC, Clang, or MSVC) supporting **C++17** or later.
+* **20 Newsgroups Dataset** extracted and located in the project root directory.
+
+### Compilation
+Open your terminal in the project directory and run:
+
+```bash 
+g++ -std=c++17 -O3 engine.cpp -o engine
+```
+
+### Execution
+*Run the compiled executable:
+
+```bash 
+./engine
+```
+
+## Usage Example
+* Upon running the engine, it will first index the documents. Once ready, you can perform searches. Here is an actual runtime session:
+
+```bash 
+Indexing documents from: 20_newsgroups ...
+Indexing Complete.
+Total Documents: 19998
+Total Unique Terms: 257715
+Index Build Time: 6.87711 seconds
+Memory usage: 80.5625 MB
+------------------------------------------------
+
+Enter search query (or type 'exit' to quit): space
+Autocomplete: space space1999 spaceacronyms spaceacronyms731394007gzacom spaceacronyms733982404gzacom 
+
+Results found: 1032
+Search time: 0.002749 seconds
+Memory usage: 80.578125 MB
+Top 5 results:
+[1] Score: 0.097123 | File: 20_newsgroups/sci.space/62126
+[2] Score: 0.095325 | File: 20_newsgroups/sci.space/61352
+[3] Score: 0.095325 | File: 20_newsgroups/sci.space/60949
+[4] Score: 0.094624 | File: 20_newsgroups/sci.space/60859
+[5] Score: 0.087247 | File: 20_newsgroups/sci.space/60904
+
+Related Keywords: jennifer huntsville camp
+```
